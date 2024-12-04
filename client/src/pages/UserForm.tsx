@@ -57,7 +57,7 @@ const UserForm = () => {
     const {
         register,
         handleSubmit,
-        watch,
+        // watch,
         formState: { errors },
         setValue
     } = useForm<FormValues>({
@@ -75,7 +75,7 @@ const UserForm = () => {
             address: "",
         }
     });
-    const x = watch()
+    // const x = watch()
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
