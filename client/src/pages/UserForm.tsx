@@ -76,7 +76,6 @@ const UserForm = () => {
         }
     });
     const x = watch()
-    console.log(x);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
@@ -86,7 +85,6 @@ const UserForm = () => {
 
 
     const onSubmit = (data: FormValues) => {
-        console.log("User Data", data);
 
         const formData = new FormData()
 
