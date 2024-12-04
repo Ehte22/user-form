@@ -3,7 +3,8 @@ import { IUser } from "../../models/user.model"
 
 export const userApi = createApi({
     reducerPath: "userApi",
-    baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:5000/api/v1/user" }),
+    // baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:5000/api/v1/user" }),
+    baseQuery: fetchBaseQuery({ baseUrl: "https://user-form-server-eight.vercel.app/api/v1/user" }),
     tagTypes: ["user"],
     endpoints: (builder) => {
         return {
