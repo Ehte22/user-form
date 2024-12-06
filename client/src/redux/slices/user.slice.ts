@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { IUser } from "../../models/user.model";
+import { IUser } from "../../models/user.interface";
 
 interface InitialState {
     selectedUser: IUser | null

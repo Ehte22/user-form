@@ -3,17 +3,24 @@ import mongoose from "mongoose"
 import cors from "cors"
 import dotenv from 'dotenv'
 import user_router from "./routes/user.route"
+import auth_router from "./routes/auth.route"
+import cookieParser = require("cookie-parser")
+import { protectedRoute } from "./utils/protected"
+import { app, server } from "./socket/socket"
 
 dotenv.config()
 
-const app = express()
 app.use(express.json())
 app.use(cors({
-    origin: "https://user-form-ochre.vercel.app",
+    origin: "http://localhost:5173",
+    // origin: "https://user-form-ochre.vercel.app",
     credentials: true
 }))
+app.use(cookieParser())
 
-app.use("/api/v1/user", user_router)
+
+app.use("/api/v1/user", protectedRoute, user_router)
+app.use("/api/v1/auth", auth_router)
 
 app.use("*", (req: Request, res: Response) => {
     res.status(400).json({ message: "Resource Not Found" })
@@ -26,7 +33,7 @@ mongoose.connect(process.env.MONGO_URL || '')
 
 mongoose.connection.once("open", () => {
     console.log("MongoDb Connected");
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
         console.log(`Server is running ${process.env.PORT}`)
     })
 })

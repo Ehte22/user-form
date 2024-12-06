@@ -4,3 +4,87 @@
   border-radius: 50%;
   border: 1px solid #111;
 }
+
+.profile-main {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 1px solid #111;
+}
+
+.btn-green {
+  background-color: #00ad5f;
+}
+
+.btn-hover:hover {
+  background-color: #00a55b;
+}
+
+.letter-spacing-xs {
+  letter-spacing: 4 px;
+}
+
+.inp-placeholder::placeholder {
+  font-weight: 600;
+}
+
+.inp-focus:focus {
+  outline: none;
+  border: 2px solid #00ad5f;
+}
+
+.link-deco {
+  color: #00ad5f;
+}
+
+.link-margin {
+  margin-top: 150px;
+}
+
+.pad-4 {
+  padding: 6px 0;
+}
+
+.dropdown_btn {
+  background: none !important;
+  border: none;
+}
+
+.no-arrow::after {
+  display: none;
+}
+
+.inp-search {
+  max-width: 300px;
+}
+
+.search-container {
+  position: relative;
+  width: fit-content;
+  width: 200px;
+}
+
+.search-container input[type="search"] {
+  padding-right: 30px;
+}
+
+.search-container .fa-magnifying-glass {
+  font-size: 20px;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+}
+
+.fs-18 {
+  font-size: 18px;
+}
+
+@media screen and (min-width: 620px) {
+  .search-container {
+    position: relative;
+    width: fit-content;
+    width: 350px;
+  }
+}

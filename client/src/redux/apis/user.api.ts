@@ -1,26 +1,55 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { IUser } from "../../models/user.model"
+import { IUser } from "../../models/user.interface"
 
 export const userApi = createApi({
     reducerPath: "userApi",
-    // baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:5000/api/v1/user" }),
-    baseQuery: fetchBaseQuery({ baseUrl: "https://user-form-server-eight.vercel.app/api/v1/user" }),
+    baseQuery: fetchBaseQuery({ baseUrl: `${import.meta.env.VITE_BACKEND_URL}/api/v1/user`, credentials: "include" }),
+    // baseQuery: fetchBaseQuery({ baseUrl: "https://user-form-server-eight.vercel.app/api/v1/user", credentials: "include" }),
     tagTypes: ["user"],
     endpoints: (builder) => {
         return {
-            getUsers: builder.query<IUser[], void>({
-                query: () => {
+            getUsers: builder.query<{ result: IUser[], total: number, page: number, limit: number }, {
+                page: number,
+                limit: number,
+                searchQuery: string,
+                filterByGender: string,
+                sortByOrder: string
+            }>({
+                query: (queryParams) => {
+                    console.log(queryParams);
+
                     return {
                         url: "/",
-                        method: "GET"
+                        method: "GET",
+                        params: queryParams
                     }
                 },
-                transformResponse: (data: { result: IUser[] }) => {
-                    return data.result
+                transformResponse: (data: { result: IUser[], total: number, page: number, limit: number }) => {
+                    return data
+                },
+                transformErrorResponse: (error: { status: number, data: { message: string } }) => {
+                    return error.data.message
                 },
                 providesTags: ["user"]
             }),
-            addUser: builder.mutation<void, FormData>({
+
+            getUser: builder.query<{ message: string, result: IUser }, string>({
+                query: id => {
+                    return {
+                        url: `/get-user/${id}`,
+                        method: "GET",
+                    }
+                },
+                transformResponse: (data: { message: string, result: IUser }) => {
+                    return data
+                },
+                transformErrorResponse: (error: { status: number, data: { message: string } }) => {
+                    return error.data.message
+                },
+                providesTags: ["user"],
+            }),
+
+            addUser: builder.mutation<{ message: string }, FormData>({
                 query: userData => {
                     return {
                         url: "/add-user",
@@ -28,9 +57,16 @@ export const userApi = createApi({
                         body: userData
                     }
                 },
-                invalidatesTags: ["user"]
+                transformResponse: (data: { message: string }) => {
+                    return data
+                },
+                transformErrorResponse: (error: { status: number, data: { message: string } }) => {
+                    return error.data.message
+                },
+                invalidatesTags: ["user"],
             }),
-            updateUser: builder.mutation<void, { userData: FormData; id: string }>({
+
+            updateUser: builder.mutation<{ message: string }, { userData: FormData; id: string }>({
                 query: ({ userData, id }) => {
                     return {
                         url: `/update-user/${id}`,
@@ -38,15 +74,27 @@ export const userApi = createApi({
                         body: userData
                     }
                 },
+                transformResponse: (data: { message: string }) => {
+                    return data
+                },
+                transformErrorResponse: (error: { status: number, data: { message: string } }) => {
+                    return error.data.message
+                },
                 invalidatesTags: ["user"]
             }),
 
-            deleteUser: builder.mutation<void, string>({
+            deleteUser: builder.mutation<{ message: string }, string>({
                 query: (id) => {
                     return {
                         url: `/delete-user/${id}`,
                         method: "DELETE",
                     }
+                },
+                transformResponse: (data: { message: string }) => {
+                    return data
+                },
+                transformErrorResponse: (error: { status: number, data: { message: string } }) => {
+                    return error.data.message
                 },
                 invalidatesTags: ["user"]
             }),
@@ -57,6 +105,7 @@ export const userApi = createApi({
 
 export const {
     useGetUsersQuery,
+    useGetUserQuery,
     useAddUserMutation,
     useUpdateUserMutation,
     useDeleteUserMutation

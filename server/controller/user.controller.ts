@@ -3,15 +3,56 @@ import asyncHandler from 'express-async-handler'
 import { User } from '../models/User'
 import upload from '../utils/upload'
 import cloudinary from '../utils/uploadConfig'
+import { io } from '../socket/socket'
+import { SortOrder } from 'mongoose'
 
 export const getUsers = asyncHandler(async (req: Request, res: Response): Promise<any> => {
-    const result = await User.find()
-    res.status(200).json({ message: "Users Fetch Successfully", result })
+
+    const page = req.query.page as string || "1"
+    const limit = req.query.limit as string || "5"
+    const searchQuery = req.query.searchQuery as string
+    const filterByGender = req.query.filterByGender as string
+    const sortByOrder = req.query.sortByOrder as string || "ascending";
+
+
+    const currentPage: number = parseInt(page)
+    const limitPerPage: number = parseInt(limit)
+
+    const skip: number = (currentPage - 1) * limitPerPage
+
+    const sort: { [key: string]: SortOrder } = (sortByOrder === "descending") ? { createdAt: -1 } : { createdAt: 1 }
+
+    io
+    const query = {
+        $and: [
+            searchQuery
+                ? {
+                    $or: [
+                        { fname: new RegExp(searchQuery, 'i') },
+                        { lname: new RegExp(searchQuery, 'i') },
+                    ],
+                }
+                : {},
+            filterByGender !== 'all' ? { gender: filterByGender } : {},
+        ],
+    };
+
+    const total = await User.countDocuments(query)
+
+    const result = await User.find(query).sort(sort).skip(skip).limit(limitPerPage)
+    io.emit("result", result)
+
+    res.status(200).json({ message: "Users Fetch Successfully", result, total, page, limit })
+})
+
+export const getUser = asyncHandler(async (req: Request, res: Response): Promise<any> => {
+    const { id } = req.params
+    const result = await User.findById(id)
+    res.status(200).json({ message: "User Fetch Successfully", result })
 })
 
 export const addUser = asyncHandler(async (req: Request, res: Response): Promise<any> => {
     upload(req, res, async (err: any) => {
-        console.log(req);
 
         if (err) {
             return res.status(400).json({ message: err.message || 'Upload error' })
@@ -30,8 +71,6 @@ export const addUser = asyncHandler(async (req: Request, res: Response): Promise
 
 export const updateUser = asyncHandler(async (req: Request, res: Response): Promise<any> => {
     upload(req, res, async (err: any) => {
-        console.log(req.body);
-        console.log(req.file);
 
         if (err) {
             return res.status(400).json({ message: err.message || 'Upload error' })

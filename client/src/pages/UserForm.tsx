@@ -1,20 +1,23 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAddUserMutation, useUpdateUserMutation } from "../redux/apis/user.api";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../redux/store";
-import { clearUser } from "../redux/slices/user.slice";
+import { useAddUserMutation, useGetUserQuery, useUpdateUserMutation } from "../redux/apis/user.api";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { toast } from "../services/toast";
 
 const UserForm = () => {
-    const [addUser, { isSuccess }] = useAddUserMutation()
-    const [updateUser, { isSuccess: isUpdateSuccess }] = useUpdateUserMutation()
+    const [addUser, { data: addData, error: addError, isSuccess, isError }] = useAddUserMutation()
+    const [updateUser, { data: updateData, error: updateError, isSuccess: isUpdateSuccess, isError: isUpdateError }] = useUpdateUserMutation()
     const navigate = useNavigate()
-    const selectedUser = useSelector((state: RootState) => state.user.selectedUser);
+    // const selectedUser = useSelector((state: RootState) => state.user.selectedUser);
+    const [profileUrl, setProfileUrl] = useState<string>("../../public/profile-1.avif")
+    const { id } = useParams()
+    const { data } = useGetUserQuery(id || "", {
+        skip: !id,
+    })
 
-    const dispatch = useDispatch()
+
 
     const userSchema = z.object({
         fname: z.string().min(1, "*Field first name is required"),
@@ -26,17 +29,19 @@ const UserForm = () => {
         time: z.string().min(1, "Field time is required"),
         date: z.string().min(1, "Field date is required"),
         city: z.string().min(1, "Field city is required"),
-        profile: z
-            .instanceof(File, { message: "Profile file is required" }) // Expecting a single file
-            .refine((file) => file !== undefined, {
-                message: "Profile file is required", // Ensure file is not undefined
-            })
-            .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
-                message: "File must be a JPEG or PNG image", // File type validation
-            }),
-
+        profile: z.union([
+            z.instanceof(File, { message: "Profile file is required" })
+                .refine((file) => file !== undefined, {
+                    message: "Profile file is required",
+                })
+                .refine((file) => ["image/jpeg", "image/png"].includes(file?.type), {
+                    message: "File must be a JPEG or PNG image",
+                }),
+            z.string()
+        ]),
         gender: z.string().min(1, "Field gender is required"),
-        hobbies: z.array(z.string().min(1, "Hobby cannot be empty"))
+        hobbies: z
+            .array(z.string())
             .min(1, "At least one hobby is required"),
         address: z.string().min(1, "Field address is required"),
     })
@@ -63,23 +68,26 @@ const UserForm = () => {
     } = useForm<FormValues>({
         resolver: zodResolver(userSchema),
         defaultValues: {
-            fname: "",
-            lname: "",
-            email: "",
-            phone: "",
+            fname: "john1",
+            lname: "doe",
+            email: "john1@gmail.com",
+            phone: "9898989898",
             time: "",
             date: "",
-            city: "",
+            city: "pune",
             gender: "",
             hobbies: [],
-            address: "",
+            address: "lorem",
         }
     });
     // const x = watch()
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
-            setValue("profile", event.target.files[0]); // Update form state with the selected file
+            setValue("profile", event.target.files[0]);
+
+            const url = URL.createObjectURL(event.target.files[0])
+            setProfileUrl(url)
         }
     };
 
@@ -106,8 +114,8 @@ const UserForm = () => {
         });
 
 
-        if (selectedUser && selectedUser._id) {
-            updateUser({ userData: formData, id: selectedUser?._id })
+        if (id) {
+            updateUser({ userData: formData, id })
         } else {
             addUser(formData)
         }
@@ -116,39 +124,57 @@ const UserForm = () => {
 
     useEffect(() => {
         if (isSuccess) {
+            toast.showSuccess(addData.message)
             navigate("/")
         }
-    }, [isSuccess, navigate])
+        if (isError) {
+            toast.showError(addError as string)
+        }
+    }, [isSuccess, navigate, addData, isError, addError])
 
     useEffect(() => {
         if (isUpdateSuccess) {
+            toast.showSuccess(updateData.message)
             navigate("/")
-            dispatch(clearUser())
         }
-    }, [isUpdateSuccess, navigate, dispatch])
+
+        if (isUpdateError) {
+            toast.showError(updateError as string)
+        }
+    }, [isUpdateSuccess, navigate, updateData, isUpdateError, updateError])
 
     useEffect(() => {
-        if (selectedUser) {
+        if (data?.result) {
             // Set form values from the selectedUser data
-            setValue("fname", selectedUser.fname || "");
-            setValue("lname", selectedUser.lname || "");
-            setValue("email", selectedUser.email || "");
-            setValue("phone", selectedUser.phone.toString() || "");
-            setValue("time", selectedUser.time || "");
-            setValue("date", selectedUser.date || "");
-            setValue("city", selectedUser.city || "");
-            setValue("gender", selectedUser.gender || "");
-            setValue("hobbies", selectedUser.hobbies || []);
-            setValue("address", selectedUser.address || "");
-            setValue("profile", selectedUser.profile || "");
+            setValue("fname", data.result.fname);
+            setValue("lname", data.result.lname);
+            setValue("email", data.result.email || "");
+            setValue("phone", data.result.phone.toString());
+            setValue("time", data.result.time);
+            setValue("date", data.result.date);
+            setValue("city", data.result.city);
+            setValue("gender", data.result.gender);
+            setValue("hobbies", data.result.hobbies);
+            setValue("address", data.result.address);
+            setValue("profile", data.result.profile);
 
+            if (data.result.profile) {
+                if (data.result.profile instanceof File) {
+                    setProfileUrl(URL.createObjectURL(data.result.profile));
+                } else {
+                    setProfileUrl(data.result.profile);
+                }
+            }
         }
-    }, [selectedUser, setValue]);
+    }, [data, setValue]);
     return <>
         <div className="container">
             <div className="card shadow mt-5">
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="card-body p-5">
+                    <div className="card-body px-5">
+                        <div className="text-center my-2">
+                            <img className="profile-main" src={profileUrl} alt="" />
+                        </div>
                         <div className="row my-3">
                             <div className="col-lg-4">
                                 <div>
@@ -220,7 +246,8 @@ const UserForm = () => {
 
                                     <div className="col-lg-4">
                                         <label htmlFor="profile" className="form-label">Profile</label>
-                                        <input type="file" id="profile" className="form-control" onChange={handleFileChange} />
+                                        <input type="file" id="profile" className="form-control"
+                                            onChange={handleFileChange} />
                                         <p className="text-danger">{errors.profile?.message}</p>
                                     </div>
 
