@@ -4,10 +4,10 @@ import { useDeleteUserMutation, useGetUsersQuery } from "../redux/apis/user.api"
 import { useNavigate } from "react-router-dom"
 import { toast } from "../services/toast"
 import Pagination from "../components/Pagination"
-import io, { Socket } from "socket.io-client";
+import io from "socket.io-client";
 
-const socket: typeof Socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
-    transports: ["websocket"]
+const socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
+    transports: ["polling"]
 });
 
 const UserList = () => {
