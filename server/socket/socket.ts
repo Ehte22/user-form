@@ -11,7 +11,8 @@ export const io = new Server(server, {
         // origin: "http://localhost:5173",
         origin: "https://user-form-ochre.vercel.app",
         credentials: true
-    }
+    },
+    transports: ['websocket'],
 })
 
 io.on("connection", (socket) => {
